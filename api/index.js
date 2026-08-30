@@ -1,67 +1,86 @@
 const express = require('express');
-const fs = require('fs');
 const path = require('path');
 
 const app = express();
 
 app.use(express.json());
-// Serve static frontend files from the public folder
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Ensure data/accounts directory and accounts.json exist temporarily
-const dataDir = path.join('/tmp', 'data', 'accounts');
-const accountsFilePath = path.join(dataDir, 'accounts.json');
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://eqqfsandsakvszoggfbr.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_KBogl3rrTb0gQ1tT-PyYyA_ZAKLK9E9';
 
-if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-}
-
-if (!fs.existsSync(accountsFilePath)) {
-    fs.writeFileSync(accountsFilePath, JSON.stringify([], null, 2));
-}
-
-const getAccounts = () => {
-    try {
-        const data = fs.readFileSync(accountsFilePath, 'utf8');
-        return JSON.parse(data);
-    } catch (err) {
-        return [];
-    }
-};
-
-const saveAccounts = (accounts) => {
-    fs.writeFileSync(accountsFilePath, JSON.stringify(accounts, null, 2));
-};
-
-// Register Endpoint
-app.post('/api/register', (req, res) => {
+// Register Endpoint using native fetch (No npm install required!)
+app.post('/api/register', async (req, res) => {
     const { name, email, password } = req.body;
+    
     if (!name || !email || !password) {
         return res.status(400).json({ success: false, message: 'Please fill in all fields.' });
     }
 
-    const accounts = getAccounts();
-    if (accounts.find(acc => acc.email === email)) {
-        return res.status(400).json({ success: false, message: 'An account with this email already exists.' });
-    }
+    try {
+        // Check if user already exists
+        const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/accounts?email=eq.${encodeURIComponent(email)}`, {
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        });
+        const existingUsers = await checkRes.json();
 
-    accounts.push({ name, email, password });
-    saveAccounts(accounts);
-    return res.status(201).json({ success: true, message: 'Account created successfully!' });
+        if (existingUsers && existingUsers.length > 0) {
+            return res.status(400).json({ success: false, message: 'An account with this email already exists.' });
+        }
+
+        // Insert new user
+        const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/accounts`, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({ name, email, password })
+        });
+
+        if (!insertRes.ok) throw new Error('Failed to insert user');
+
+        return res.status(201).json({ success: true, message: 'Account created successfully!' });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Server error during registration.' });
+    }
 });
 
-// Login Endpoint
-app.post('/api/login', (req, res) => {
+// Login Endpoint using native fetch
+app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
-    const accounts = getAccounts();
-    const user = accounts.find(acc => acc.email === email && acc.password === password);
 
-    if (!user) {
+    if (!email || !password) {
+        return res.status(400).json({ success: false, message: 'Please provide email and password.' });
+    }
+
+    try {
+        const loginRes = await fetch(`${SUPABASE_URL}/rest/v1/accounts?email=eq.${encodeURIComponent(email)}&password=eq.${encodeURIComponent(password)}`, {
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        });
+        const users = await loginRes.json();
+
+        if (!users || users.length === 0) {
+            return res.status(401).json({ success: false, message: "We couldn't find any account matching those credentials." });
+        }
+
+        const user = users[0];
+        return res.status(200).json({ 
+            success: true, 
+            message: 'Login successful!', 
+            user: { name: user.name, email: user.email } 
+        });
+    } catch (err) {
         return res.status(401).json({ success: false, message: "We couldn't find any account matching those credentials." });
     }
-
-    return res.status(200).json({ success: true, message: 'Login successful!', user: { name: user.name, email: user.email } });
 });
 
-// Export app for Vercel serverless functions
 module.exports = app;
