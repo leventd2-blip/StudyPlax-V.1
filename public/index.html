@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Modern Login Page | AsmrProg</title>
+</head>
+
+<body>
+
+    <div class="container" id="container">
+        <div class="form-container sign-up">
+            <form id="signup-form">
+                <h1>Create Account</h1>
+                <span>or use your email for registration</span>
+                <input type="text" id="signup-name" placeholder="Name" required>
+                <input type="email" id="signup-email" placeholder="Email" required>
+                <input type="password" id="signup-password" placeholder="Password" required>
+                <p id="signup-error" class="error-message"></p>
+                <button type="submit">Sign Up</button>
+            </form>
+        </div>
+
+        <div class="form-container sign-in">
+            <form id="signin-form">
+                <h1>Sign In</h1>
+                <span>or use your email password</span>
+                <input type="email" id="signin-email" placeholder="Email" required>
+                <input type="password" id="signin-password" placeholder="Password" required>
+                <p id="signin-error" class="error-message"></p>
+                <a href="#">Forget Your Password?</a>
+                <button type="submit" id="signin-btn">Sign In</button>
+            </form>
+        </div>
+
+        <div class="form-container dashboard" id="dashboard-view" style="display: none; width: 50%; left: 0; z-index: 2; background: #fff; flex-direction: column; justify-content: center; align-items: center; padding: 0 40px;">
+            <h1>Welcome, <span id="user-display-name">User</span>!</h1>
+            <p>You are successfully logged in.</p>
+            <button id="logout-btn" class="logout-button">Log Out</button>
+        </div>
+
+        <div class="toggle-container">
+            <div class="toggle">
+                <div class="toggle-panel toggle-left">
+                    <h1>Welcome Back!</h1>
+                    <p>Enter your personal details to use all of site features</p>
+                    <button class="hidden" id="login">Sign In</button>
+                </div>
+                <div class="toggle-panel toggle-right">
+                    <h1>Hello, Friend!</h1>
+                    <p>Register with your personal details to use all of site features</p>
+                    <button class="hidden" id="register">Sign Up</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
