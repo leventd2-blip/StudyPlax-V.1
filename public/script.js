@@ -25,7 +25,6 @@ const folderModal = document.getElementById('folderModal');
 const cancelFolderBtn = document.getElementById('cancelFolderBtn');
 const saveFolderBtn = document.getElementById('saveFolderBtn');
 const newFolderNameInput = document.getElementById('newFolderName');
-const folderError = document.getElementById('folderError');
 const backToFoldersBtn = document.getElementById('backToFoldersBtn');
 const activeFolderName = document.getElementById('activeFolderName');
 
@@ -50,6 +49,14 @@ let currentUserEmail = null;
 let currentFolderId = null;
 let activeFolderCards = [];
 let currentQuizIndex = 0;
+
+// Check LocalStorage on page load for auto-login persistence
+window.addEventListener('DOMContentLoaded', () => {
+    const savedEmail = localStorage.getItem('studyplax_user');
+    if (savedEmail) {
+        showDashboard(savedEmail);
+    }
+});
 
 // Panel Toggle
 signUpButton.addEventListener('click', () => container.classList.add("right-panel-active"));
@@ -85,7 +92,10 @@ continueBtn.addEventListener('click', async () => {
         body: JSON.stringify(registeredUserData)
     });
     const data = await res.json();
-    if (res.ok && data.success) showDashboard(data.user.email);
+    if (res.ok && data.success) {
+        localStorage.setItem('studyplax_user', data.user.email);
+        showDashboard(data.user.email);
+    }
 });
 
 // Login
@@ -101,6 +111,7 @@ loginForm.addEventListener('submit', async (e) => {
     });
     const data = await res.json();
     if (res.ok && data.success) {
+        localStorage.setItem('studyplax_user', data.user.email);
         showDashboard(data.user.email);
     } else {
         loginError.textContent = data.message;
@@ -259,8 +270,9 @@ prevQuizBtn.addEventListener('click', () => {
     }
 });
 
-// Logout Button
+// Logout Button clears localStorage and resets session
 logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('studyplax_user');
     dashboardScreen.style.display = 'none';
     container.style.display = 'block';
     loginForm.reset();
