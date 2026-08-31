@@ -1,38 +1,39 @@
-const container = document.getElementById('container');
-const registerBtn = document.getElementById('register');
-const loginBtn = document.getElementById('login');
+const container = document.getElementById('authContainer');
+const signUpButton = document.getElementById('signUp');
+const signInButton = document.getElementById('signIn');
 
-const signinForm = document.getElementById('signin-form');
-const signupForm = document.getElementById('signup-form');
-const signinError = document.getElementById('signin-error');
-const signupError = document.getElementById('signup-error');
+const registerForm = document.getElementById('registerForm');
+const loginForm = document.getElementById('loginForm');
 
-const signinContainer = document.querySelector('.sign-in');
-const dashboardView = document.getElementById('dashboard-view');
-const userDisplayName = document.getElementById('user-display-name');
-const logoutBtn = document.getElementById('logout-btn');
+const registerError = document.getElementById('registerError');
+const loginError = document.getElementById('loginError');
 
-// Panel Sliding Listeners
-registerBtn.addEventListener('click', () => {
-    container.classList.add("active");
-    signinError.textContent = '';
-    signupError.textContent = '';
+const successModal = document.getElementById('successModal');
+const continueBtn = document.getElementById('continueBtn');
+const dashboardScreen = document.getElementById('dashboardScreen');
+const leaveBtn = document.getElementById('leaveBtn');
+
+let registeredUserData = null; // Temporarily holds info to auto-login after clicking continue
+
+// Toggle sliding panels
+signUpButton.addEventListener('click', () => {
+    container.classList.add("right-panel-active");
+    registerError.textContent = '';
 });
 
-loginBtn.addEventListener('click', () => {
-    container.classList.remove("active");
-    signinError.textContent = '';
-    signupError.textContent = '';
+signInButton.addEventListener('click', () => {
+    container.classList.remove("right-panel-active");
+    loginError.textContent = '';
 });
 
-// Handle User Registration
-signupForm.addEventListener('submit', async (e) => {
+// REGISTER SUBMISSION
+registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    signupError.textContent = '';
+    registerError.textContent = '';
 
-    const name = document.getElementById('signup-name').value;
-    const email = document.getElementById('signup-email').value;
-    const password = document.getElementById('signup-password').value;
+    const name = document.getElementById('regName').value;
+    const email = document.getElementById('regEmail').value;
+    const password = document.getElementById('regPassword').value;
 
     try {
         const response = await fetch('/api/register', {
@@ -40,28 +41,53 @@ signupForm.addEventListener('submit', async (e) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, email, password })
         });
-
         const data = await response.json();
 
-        if (response.ok) {
-            alert('Registration successful! Please sign in.');
-            container.classList.remove("active");
-            signupForm.reset();
+        if (response.ok && data.success) {
+            // Save data temporarily so "Continue" can log them in
+            registeredUserData = { email, password };
+            // Show custom success modal popup instead of alert
+            successModal.style.display = 'flex';
         } else {
-            signupError.textContent = data.message;
+            registerError.textContent = data.message || 'Registration failed.';
         }
     } catch (err) {
-        signupError.textContent = 'Server error. Please try again later.';
+        registerError.textContent = 'Network error. Please try again.';
     }
 });
 
-// Handle User Login
-signinForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    signinError.textContent = '';
+// CONTINUE BUTTON ON SUCCESS MODAL
+continueBtn.addEventListener('click', async () => {
+    successModal.style.display = 'none';
 
-    const email = document.getElementById('signin-email').value;
-    const password = document.getElementById('signin-password').value;
+    if (registeredUserData) {
+        // Automatically log them in using the registered credentials
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(registeredUserData)
+            });
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                showDashboard();
+            } else {
+                container.classList.remove("right-panel-active"); // Switch to sign in view
+            }
+        } catch (err) {
+            container.classList.remove("right-panel-active");
+        }
+    }
+});
+
+// LOGIN SUBMISSION
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    loginError.textContent = '';
+
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
 
     try {
         const response = await fetch('/api/login', {
@@ -69,25 +95,30 @@ signinForm.addEventListener('submit', async (e) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
-
         const data = await response.json();
 
-        if (response.ok) {
-            // Hide the sign-in form and display the dashboard with the red logout button
-            userDisplayName.textContent = data.user.name;
-            signinContainer.style.display = 'none';
-            dashboardView.style.display = 'flex';
-            signinForm.reset();
+        if (response.ok && data.success) {
+            showDashboard();
         } else {
-            signinError.textContent = data.message;
+            loginError.textContent = data.message || "We couldn't find any account matching those credentials.";
         }
     } catch (err) {
-        signinError.textContent = "We couldn't find any account matching those credentials.";
+        loginError.textContent = 'Network error. Please try again.';
     }
 });
 
-// Handle Logout
-logoutBtn.addEventListener('click', () => {
-    dashboardView.style.display = 'none';
-    signinContainer.style.display = 'block';
+// SHOW DASHBOARD FUNCTION
+function showDashboard() {
+    container.style.display = 'none';
+    successModal.style.display = 'none';
+    dashboardScreen.style.display = 'flex';
+}
+
+// LEAVE BUTTON (Logs out / goes back to login screen)
+leaveBtn.addEventListener('click', () => {
+    dashboardScreen.style.display = 'none';
+    container.style.display = 'block';
+    loginForm.reset();
+    registerForm.reset();
+    registeredUserData = null;
 });
