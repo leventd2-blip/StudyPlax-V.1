@@ -61,7 +61,7 @@
         </div>
     </div>
 
-    <!-- DASHBOARD SCREEN (Sidebar Layout) -->
+    <!-- DASHBOARD SCREEN (Sidebar Layout matching UI) -->
     <div id="dashboardScreen" class="dashboard-screen" style="display: none;">
         
         <!-- SIDEBAR -->
@@ -81,7 +81,7 @@
                 <div id="foldersHomeView">
                     <div class="section-header">
                         <h1>Your Folders</h1>
-                        <button id="openFolderModalBtn" class="primary-btn"><i class="fa-solid fa-plus"></i> New Folder</button>
+                        <button id="openFolderModalBtn" class="dashboard-primary-btn"><i class="fa-solid fa-plus"></i> New Folder</button>
                     </div>
                     <div id="foldersGrid" class="folders-grid">
                         <!-- Folders populate here -->
@@ -103,7 +103,7 @@
                         <form id="flashcardForm" class="inline-form">
                             <input type="text" id="cardQuestion" placeholder="Question" required />
                             <input type="text" id="cardAnswer" placeholder="Answer" required />
-                            <button type="submit" class="modal-btn">Save Card</button>
+                            <button type="submit" class="dashboard-primary-btn">Save Card</button>
                         </form>
                         <div id="flashcardMessage" class="error-message"></div>
                     </div>
@@ -128,9 +128,9 @@
                         </div>
                         <p class="quiz-hint">Click card to flip</p>
                         <div class="quiz-controls">
-                            <button id="prevQuizBtn" class="modal-btn">Previous</button>
+                            <button id="prevQuizBtn" class="dashboard-primary-btn">Previous</button>
                             <span id="quizCounter">1 / 5</span>
-                            <button id="nextQuizBtn" class="modal-btn">Next</button>
+                            <button id="nextQuizBtn" class="dashboard-primary-btn">Next</button>
                         </div>
                     </div>
                 </div>
@@ -159,7 +159,7 @@
             <input type="text" id="newFolderName" placeholder="Folder Name (e.g., Biology Chapter 1)" required />
             <div class="modal-buttons">
                 <button id="cancelFolderBtn" class="ghost-btn">Cancel</button>
-                <button id="saveFolderBtn" class="modal-btn">Create</button>
+                <button id="saveFolderBtn" class="dashboard-primary-btn">Create</button>
             </div>
             <div id="folderError" class="error-message"></div>
         </div>
