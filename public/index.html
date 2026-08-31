@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Login & Register</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- FontAwesome for icons if needed -->
+    <title>StudyPlax - Modern Learning Hub</title>
+    <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -62,11 +61,35 @@
         </div>
     </div>
 
-    <!-- DASHBOARD SCREEN (White screen with red Leave button) -->
+    <!-- DASHBOARD SCREEN -->
     <div id="dashboardScreen" class="dashboard-screen" style="display: none;">
+        <div class="dashboard-content">
+            <h1>Welcome to StudyPlax Dashboard! 🚀</h1>
+            <p>Create your custom flashcard decks and test your knowledge.</p>
+
+            <!-- Create Flashcard Form -->
+            <div class="card-creator">
+                <h3>Create a New Flashcard</h3>
+                <form id="flashcardForm" class="dashboard-form">
+                    <input type="text" id="cardQuestion" placeholder="Question (e.g., What is the powerhouse of the cell?)" required />
+                    <input type="text" id="cardAnswer" placeholder="Answer (e.g., Mitochondria)" required />
+                    <button type="submit" class="modal-btn">Save Flashcard</button>
+                </form>
+                <div id="flashcardMessage" class="error-message"></div>
+            </div>
+
+            <!-- Flashcard Decks Display -->
+            <div class="deck-container">
+                <h3>Your Flashcard Deck</h3>
+                <div id="cardsGrid" class="cards-grid">
+                    <!-- Flashcards load here -->
+                </div>
+            </div>
+        </div>
+
         <button id="leaveBtn" class="leave-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Leave</button>
     </div>
 
-    <script src="script.js"></script>
+    <script src="/script.js"></script>
 </body>
 </html>
