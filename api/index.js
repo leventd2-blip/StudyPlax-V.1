@@ -81,13 +81,47 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// Save Flashcard Endpoint
-app.post('/api/flashcards/add', async (req, res) => {
-    const { email, question, answer } = req.body;
-    
-    if (!email || !question || !answer) {
-        return res.status(400).json({ success: false, message: 'Please provide all fields.' });
+// Create Folder Endpoint
+app.post('/api/folders/add', async (req, res) => {
+    const { email, folder_name } = req.body;
+    if (!email || !folder_name) return res.status(400).json({ success: false, message: 'Missing fields' });
+
+    try {
+        const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/folders`, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({ user_email: email, folder_name })
+        });
+        if (!insertRes.ok) throw new Error();
+        return res.status(201).json({ success: true });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Error creating folder' });
     }
+});
+
+// Get Folders Endpoint
+app.get('/api/folders', async (req, res) => {
+    const email = req.query.email;
+    try {
+        const fetchRes = await fetch(`${SUPABASE_URL}/rest/v1/folders?user_email=eq.${encodeURIComponent(email)}`, {
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        const folders = await fetchRes.json();
+        return res.status(200).json({ success: true, folders });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Error loading folders' });
+    }
+});
+
+// Save Flashcard to Folder
+app.post('/api/flashcards/add', async (req, res) => {
+    const { email, folder_id, question, answer } = req.body;
+    if (!email || !folder_id || !question || !answer) return res.status(400).json({ success: false, message: 'Missing fields' });
 
     try {
         const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/flashcards`, {
@@ -98,32 +132,26 @@ app.post('/api/flashcards/add', async (req, res) => {
                 'Content-Type': 'application/json',
                 'Prefer': 'return=minimal'
             },
-            body: JSON.stringify({ user_email: email, question, answer })
+            body: JSON.stringify({ user_email: email, folder_id, question, answer })
         });
-
-        if (!insertRes.ok) throw new Error('Failed to save flashcard');
-
-        return res.status(201).json({ success: true, message: 'Flashcard saved successfully!' });
+        if (!insertRes.ok) throw new Error();
+        return res.status(201).json({ success: true });
     } catch (err) {
-        return res.status(500).json({ success: false, message: 'Server error saving flashcard.' });
+        return res.status(500).json({ success: false, message: 'Error saving card' });
     }
 });
 
-// Get Flashcards Endpoint
+// Get Flashcards by Folder
 app.get('/api/flashcards', async (req, res) => {
-    const email = req.query.email;
-
+    const folder_id = req.query.folder_id;
     try {
-        const fetchRes = await fetch(`${SUPABASE_URL}/rest/v1/flashcards?user_email=eq.${encodeURIComponent(email)}`, {
-            headers: {
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-            }
+        const fetchRes = await fetch(`${SUPABASE_URL}/rest/v1/flashcards?folder_id=eq.${encodeURIComponent(folder_id)}`, {
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
         });
         const cards = await fetchRes.json();
         return res.status(200).json({ success: true, cards });
     } catch (err) {
-        return res.status(500).json({ success: false, message: 'Error loading flashcards.' });
+        return res.status(500).json({ success: false, message: 'Error loading cards' });
     }
 });
 
