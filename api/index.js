@@ -9,7 +9,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://eqqfsandsakvszoggfbr.supabase.co';
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_KBogl3rrTb0gQ1tT-PyYyA_ZAKLK9E9';
 
-// Register Endpoint using native fetch
+// Register Endpoint
 app.post('/api/register', async (req, res) => {
     const { name, email, password } = req.body;
     
@@ -24,13 +24,6 @@ app.post('/api/register', async (req, res) => {
                 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
             }
         });
-        
-        if (!checkRes.ok) {
-            const errText = await checkRes.text();
-            console.error('Supabase Check Error:', errText);
-            return res.status(500).json({ success: false, message: `Check error: ${errText}` });
-        }
-
         const existingUsers = await checkRes.json();
 
         if (existingUsers && existingUsers.length > 0) {
@@ -48,20 +41,15 @@ app.post('/api/register', async (req, res) => {
             body: JSON.stringify({ name, email, password })
         });
 
-        if (!insertRes.ok) {
-            const errText = await insertRes.text();
-            console.error('Supabase Insert Error:', errText);
-            return res.status(500).json({ success: false, message: `Insert error: ${errText}` });
-        }
+        if (!insertRes.ok) throw new Error('Failed to insert user');
 
         return res.status(201).json({ success: true, message: 'Account created successfully!' });
     } catch (err) {
-        console.error('Server Catch Error:', err.message);
-        return res.status(500).json({ success: false, message: `Server error: ${err.message}` });
+        return res.status(500).json({ success: false, message: 'Server error during registration.' });
     }
 });
 
-// Login Endpoint using native fetch
+// Login Endpoint
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
 
@@ -76,13 +64,6 @@ app.post('/api/login', async (req, res) => {
                 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
             }
         });
-        
-        if (!loginRes.ok) {
-            const errText = await loginRes.text();
-            console.error('Supabase Login Error:', errText);
-            return res.status(500).json({ success: false, message: `Login error: ${errText}` });
-        }
-
         const users = await loginRes.json();
 
         if (!users || users.length === 0) {
@@ -96,8 +77,53 @@ app.post('/api/login', async (req, res) => {
             user: { name: user.name, email: user.email } 
         });
     } catch (err) {
-        console.error('Server Login Catch Error:', err.message);
         return res.status(401).json({ success: false, message: "We couldn't find any account matching those credentials." });
+    }
+});
+
+// Save Flashcard Endpoint
+app.post('/api/flashcards/add', async (req, res) => {
+    const { email, question, answer } = req.body;
+    
+    if (!email || !question || !answer) {
+        return res.status(400).json({ success: false, message: 'Please provide all fields.' });
+    }
+
+    try {
+        const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/flashcards`, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({ user_email: email, question, answer })
+        });
+
+        if (!insertRes.ok) throw new Error('Failed to save flashcard');
+
+        return res.status(201).json({ success: true, message: 'Flashcard saved successfully!' });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Server error saving flashcard.' });
+    }
+});
+
+// Get Flashcards Endpoint
+app.get('/api/flashcards', async (req, res) => {
+    const email = req.query.email;
+
+    try {
+        const fetchRes = await fetch(`${SUPABASE_URL}/rest/v1/flashcards?user_email=eq.${encodeURIComponent(email)}`, {
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        });
+        const cards = await fetchRes.json();
+        return res.status(200).json({ success: true, cards });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Error loading flashcards.' });
     }
 });
 
