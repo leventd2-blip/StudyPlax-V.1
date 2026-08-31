@@ -1,7 +1,11 @@
 {
-  "name": "modern-login-app",
+  "name": "studyplax",
   "version": "1.0.0",
+  "description": "StudyPlax Learning Platform",
   "main": "api/index.js",
+  "scripts": {
+    "start": "node api/index.js"
+  },
   "dependencies": {
     "express": "^4.19.2"
   }
