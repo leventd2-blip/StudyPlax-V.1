@@ -13,7 +13,8 @@ const continueBtn = document.getElementById('continueBtn');
 const dashboardScreen = document.getElementById('dashboardScreen');
 const leaveBtn = document.getElementById('leaveBtn');
 
-let registeredUserData = null; // Temporarily holds info to auto-login after clicking continue
+let registeredUserData = null; 
+let currentUserEmail = null;
 
 // Toggle sliding panels
 signUpButton.addEventListener('click', () => {
@@ -44,9 +45,7 @@ registerForm.addEventListener('submit', async (e) => {
         const data = await response.json();
 
         if (response.ok && data.success) {
-            // Save data temporarily so "Continue" can log them in
             registeredUserData = { email, password };
-            // Show custom success modal popup instead of alert
             successModal.style.display = 'flex';
         } else {
             registerError.textContent = data.message || 'Registration failed.';
@@ -61,7 +60,6 @@ continueBtn.addEventListener('click', async () => {
     successModal.style.display = 'none';
 
     if (registeredUserData) {
-        // Automatically log them in using the registered credentials
         try {
             const response = await fetch('/api/login', {
                 method: 'POST',
@@ -71,9 +69,9 @@ continueBtn.addEventListener('click', async () => {
             const data = await response.json();
 
             if (response.ok && data.success) {
-                showDashboard();
+                showDashboard(data.user.email);
             } else {
-                container.classList.remove("right-panel-active"); // Switch to sign in view
+                container.classList.remove("right-panel-active");
             }
         } catch (err) {
             container.classList.remove("right-panel-active");
@@ -98,7 +96,7 @@ loginForm.addEventListener('submit', async (e) => {
         const data = await response.json();
 
         if (response.ok && data.success) {
-            showDashboard();
+            showDashboard(data.user.email);
         } else {
             loginError.textContent = data.message || "We couldn't find any account matching those credentials.";
         }
@@ -107,18 +105,85 @@ loginForm.addEventListener('submit', async (e) => {
     }
 });
 
-// SHOW DASHBOARD FUNCTION
-function showDashboard() {
+// SHOW DASHBOARD
+function showDashboard(email) {
+    currentUserEmail = email;
     container.style.display = 'none';
     successModal.style.display = 'none';
     dashboardScreen.style.display = 'flex';
+    loadUserFlashcards();
 }
 
-// LEAVE BUTTON (Logs out / goes back to login screen)
+// LEAVE BUTTON
 leaveBtn.addEventListener('click', () => {
     dashboardScreen.style.display = 'none';
     container.style.display = 'block';
     loginForm.reset();
     registerForm.reset();
     registeredUserData = null;
+    currentUserEmail = null;
+});
+
+// LOAD FLASHCARDS
+async function loadUserFlashcards() {
+    if (!currentUserEmail) return;
+    try {
+        const res = await fetch(`/api/flashcards?email=${encodeURIComponent(currentUserEmail)}`);
+        const data = await res.json();
+        
+        const grid = document.getElementById('cardsGrid');
+        grid.innerHTML = '';
+
+        if (data.cards && data.cards.length > 0) {
+            data.cards.forEach(card => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'flashcard';
+                cardEl.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-front"><strong>Q:</strong> ${card.question}</div>
+                        <div class="card-back"><strong>A:</strong> ${card.answer}</div>
+                    </div>
+                `;
+                cardEl.addEventListener('click', () => {
+                    cardEl.classList.toggle('flipped');
+                });
+                grid.appendChild(cardEl);
+            });
+        } else {
+            grid.innerHTML = '<p>No flashcards yet. Create your first one above!</p>';
+        }
+    } catch (err) {
+        console.error('Error fetching cards');
+    }
+}
+
+// CREATE FLASHCARD FORM
+document.getElementById('flashcardForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const question = document.getElementById('cardQuestion').value;
+    const answer = document.getElementById('cardAnswer').value;
+    const msg = document.getElementById('flashcardMessage');
+
+    try {
+        const res = await fetch('/api/flashcards/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: currentUserEmail, question, answer })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            document.getElementById('cardQuestion').value = '';
+            document.getElementById('cardAnswer').value = '';
+            msg.style.color = '#4bb543';
+            msg.textContent = 'Card saved successfully!';
+            loadUserFlashcards();
+        } else {
+            msg.style.color = '#ff4d4d';
+            msg.textContent = data.message;
+        }
+    } catch (err) {
+        msg.style.color = '#ff4d4d';
+        msg.textContent = 'Error saving card.';
+    }
 });
