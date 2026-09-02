@@ -9,7 +9,7 @@
 </head>
 <body>
 
-    <!-- AUTH CONTAINER (Keeps original sliding color gradient) -->
+    <!-- AUTH CONTAINER (Original sliding color gradient) -->
     <div class="container" id="authContainer">
         <div class="form-container sign-up-container">
             <form id="registerForm">
@@ -61,7 +61,7 @@
         </div>
     </div>
 
-    <!-- DASHBOARD SCREEN (Black & White Minimalist Theme with Expanded Sidebar) -->
+    <!-- DASHBOARD SCREEN (White background with thin divider) -->
     <div id="dashboardScreen" class="dashboard-screen" style="display: none;">
         
         <!-- SIDEBAR -->
@@ -78,6 +78,26 @@
 
         <!-- MAIN CONTENT AREA -->
         <div class="main-content">
+
+            <!-- TAB: DASHBOARD OVERVIEW -->
+            <div id="tabDashboard" class="tab-pane" style="display: none;">
+                <h1>Dashboard Overview</h1>
+                <p>Welcome back! Here is a summary of your study workspace.</p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Folders</h3>
+                        <p id="statFolderCount">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Streak</h3>
+                        <p>🔥 3 Days</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Saved Bookmarks</h3>
+                        <p id="statBookmarkCount">0</p>
+                    </div>
+                </div>
+            </div>
 
             <!-- TAB: FOLDERS VIEW -->
             <div id="tabFolders" class="tab-pane">
@@ -102,14 +122,13 @@
                     <!-- Flashcards Grid with built-in "+" card button -->
                     <h3>Flashcards in Deck</h3>
                     <div id="cardsGrid" class="cards-grid">
-                        <!-- Add Card "+" Button Card -->
+                        <!-- Add Card "+" Button Tile -->
                         <div id="openCardModalBtn" class="flashcard add-card-trigger">
                             <div class="add-card-content">
                                 <i class="fa-solid fa-plus"></i>
                                 <span>Add Flashcard</span>
                             </div>
                         </div>
-                        <!-- Cards populate here -->
                     </div>
                 </div>
 
@@ -135,49 +154,33 @@
 
             </div>
 
-            <!-- TAB: DASHBOARD OVERVIEW -->
-            <div id="tabDashboard" class="tab-pane" style="display: none;">
-                <h1>Dashboard Overview</h1>
-                <p>Welcome back! Here is a summary of your recent study progress.</p>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>Total Folders</h3>
-                        <p id="statFolderCount">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Active Streak</h3>
-                        <p>🔥 3 Days</p>
-                    </div>
-                </div>
-            </div>
-
             <!-- TAB: ANALYTICS -->
             <div id="tabAnalytics" class="tab-pane" style="display: none;">
                 <h1>Analytics & Progress</h1>
-                <p>Track how many cards you've mastered and your weekly study habits.</p>
+                <p>Track your study sessions and overall memory mastery.</p>
                 <div class="settings-card">
                     <h3>Mastery Rate</h3>
-                    <p>You have reviewed 100% of your current decks this week.</p>
+                    <p>All active flashcards are synced to your account database.</p>
                 </div>
             </div>
 
             <!-- TAB: BOOKMARKS -->
             <div id="tabBookmarks" class="tab-pane" style="display: none;">
                 <h1>Bookmarked Cards</h1>
-                <p>Quick access to difficult flashcards you have saved for later review.</p>
-                <div class="settings-card">
-                    <p>No bookmarked cards yet.</p>
+                <p>Quick access to difficult flashcards you saved for later review.</p>
+                <div id="bookmarksGrid" class="cards-grid" style="margin-top: 20px;">
+                    <!-- Bookmarked cards populate here -->
                 </div>
             </div>
 
             <!-- TAB: SETTINGS VIEW -->
             <div id="tabSettings" class="tab-pane" style="display: none;">
                 <h1>Settings</h1>
-                <p>Manage your account preferences, theme, and session.</p>
+                <p>Manage your account preferences and session.</p>
                 
                 <div class="settings-card">
                     <h3>Appearance</h3>
-                    <p>Current Theme: <strong>Minimalist Black & White</strong></p>
+                    <p>Theme: <strong>Minimalist White & Black</strong></p>
                 </div>
 
                 <div class="settings-card">
@@ -203,7 +206,7 @@
         </div>
     </div>
 
-    <!-- CREATE FLASHCARD MODAL (Triggered by "+" button) -->
+    <!-- CREATE FLASHCARD MODAL -->
     <div id="cardModal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
             <h2>New Flashcard</h2>
