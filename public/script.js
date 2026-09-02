@@ -1,3 +1,4 @@
+
 const container = document.getElementById('authContainer');
 const signUpButton = document.getElementById('signUp');
 const signInButton = document.getElementById('signIn');
@@ -35,6 +36,7 @@ const newFolderNameInput = document.getElementById('newFolderName');
 const backToFoldersBtn = document.getElementById('backToFoldersBtn');
 const activeFolderName = document.getElementById('activeFolderName');
 const statFolderCount = document.getElementById('statFolderCount');
+const statBookmarkCount = document.getElementById('statBookmarkCount');
 
 // Flashcards & Quiz + Modal Triggers
 const openCardModalBtn = document.getElementById('openCardModalBtn');
@@ -42,6 +44,7 @@ const cardModal = document.getElementById('cardModal');
 const cancelCardBtn = document.getElementById('cancelCardBtn');
 const flashcardModalForm = document.getElementById('flashcardModalForm');
 const cardsGrid = document.getElementById('cardsGrid');
+const bookmarksGrid = document.getElementById('bookmarksGrid');
 const startQuizBtn = document.getElementById('startQuizBtn');
 const quizView = document.getElementById('quizView');
 const exitQuizBtn = document.getElementById('exitQuizBtn');
@@ -135,6 +138,7 @@ function showDashboard(email) {
     successModal.style.display = 'none';
     dashboardScreen.style.display = 'flex';
     loadFolders();
+    loadBookmarks();
 }
 
 // Sidebar Navigation Switcher Helper
@@ -148,7 +152,11 @@ function switchTab(activeTabEl, activeNavEl) {
     activeNavEl.classList.add('active-tab');
 }
 
-navDashboard.addEventListener('click', () => switchTab(tabDashboard, navDashboard));
+navDashboard.addEventListener('click', () => {
+    switchTab(tabDashboard, navDashboard);
+    loadFolders();
+    loadBookmarks();
+});
 navFolders.addEventListener('click', () => {
     switchTab(tabFolders, navFolders);
     folderDetailView.style.display = 'none';
@@ -156,7 +164,10 @@ navFolders.addEventListener('click', () => {
     foldersHomeView.style.display = 'block';
 });
 navAnalytics.addEventListener('click', () => switchTab(tabAnalytics, navAnalytics));
-navBookmarks.addEventListener('click', () => switchTab(tabBookmarks, navBookmarks));
+navBookmarks.addEventListener('click', () => {
+    switchTab(tabBookmarks, navBookmarks);
+    loadBookmarks();
+});
 navSettings.addEventListener('click', () => switchTab(tabSettings, navSettings));
 
 // Folder Modals
@@ -241,7 +252,6 @@ async function loadFlashcards() {
     const data = await res.json();
     activeFolderCards = data.cards || [];
     
-    // Clear dynamic cards but keep the first "+" add card trigger tile
     cardsGrid.innerHTML = '';
     cardsGrid.appendChild(openCardModalBtn);
 
@@ -249,12 +259,79 @@ async function loadFlashcards() {
         activeFolderCards.forEach(card => {
             const cardEl = document.createElement('div');
             cardEl.className = 'flashcard';
-            cardEl.innerHTML = `<div class="card-inner"><div class="card-front">Q: ${card.question}</div><div class="card-back">A: ${card.answer}</div></div>`;
-            cardEl.addEventListener('click', () => cardEl.classList.toggle('flipped'));
+            cardEl.innerHTML = `
+                <button class="bookmark-btn" title="Bookmark card"><i class="fa-solid fa-bookmark"></i></button>
+                <div class="card-inner">
+                    <div class="card-front">Q: ${card.question}</div>
+                    <div class="card-back">A: ${card.answer}</div>
+                </div>`;
+            
+            // Flip card on click (except when clicking bookmark button)
+            cardEl.addEventListener('click', (e) => {
+                if (!e.target.closest('.bookmark-btn')) {
+                    cardEl.classList.toggle('flipped');
+                }
+            });
+
+            // Bookmark button handler
+            const bookmarkBtn = cardEl.querySelector('.bookmark-btn');
+            bookmarkBtn.addEventListener('click', async () => {
+                await toggleBookmark(card.question, card.answer, bookmarkBtn);
+            });
+
             cardsGrid.appendChild(cardEl);
         });
     }
 }
+
+// Bookmarking Functions
+async function toggleBookmark(question, answer, btnElement) {
+    const res = await fetch('/api/bookmarks/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: currentUserEmail, question, answer })
+    });
+    const data = await res.json();
+    if (res.ok) {
+        btnElement.classList.toggle('bookmarked', data.bookmarked);
+        loadBookmarks();
+    }
+}
+
+async function loadBookmarks() {
+    const SUPABASE_URL = 'https://eqqfsandsakvszoggfbr.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_KBogl3rrTb0gQ1tT-PyYyA_ZAKLK9E9';
+
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/bookmarks?user_email=eq.${encodeURIComponent(currentUserEmail)}`, {
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        const bookmarks = await res.json();
+        bookmarksGrid.innerHTML = '';
+        statBookmarkCount.textContent = bookmarks.length;
+
+        if (bookmarks && bookmarks.length > 0) {
+            bookmarks.forEach(bm => {
+                const bmEl = document.createElement('div');
+                bmEl.className = 'flashcard';
+                bmEl.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-front">Q: ${bm.question}</div>
+                        <div class="card-back">A: ${bm.answer}</div>
+                    </div>`;
+                bmEl.addEventListener('click', () => bmEl.classList.toggle('flipped'));
+                bookmarksGrid.appendChild(bmEl);
+            });
+        } else {
+            bookmarksGrid.innerHTML = '<p>No bookmarked cards yet. Click the bookmark icon on any flashcard to save it here!</p>';
+        }
+    } catch (err) {
+        console.error('Error loading bookmarks');
+    }
+}
+
+// Add Express Endpoint in backend or handle bookmark route
+// (Make sure to add the backend route handler below to api/index.js if needed)
 
 // Quiz Mode
 startQuizBtn.addEventListener('click', () => {
