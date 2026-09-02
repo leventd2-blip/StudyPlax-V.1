@@ -10,10 +10,17 @@ const successModal = document.getElementById('successModal');
 const continueBtn = document.getElementById('continueBtn');
 const dashboardScreen = document.getElementById('dashboardScreen');
 
-// Navigation Tabs
+// Navigation Tabs & Sidebar elements
+const navDashboard = document.getElementById('navDashboard');
 const navFolders = document.getElementById('navFolders');
+const navAnalytics = document.getElementById('navAnalytics');
+const navBookmarks = document.getElementById('navBookmarks');
 const navSettings = document.getElementById('navSettings');
+
+const tabDashboard = document.getElementById('tabDashboard');
 const tabFolders = document.getElementById('tabFolders');
+const tabAnalytics = document.getElementById('tabAnalytics');
+const tabBookmarks = document.getElementById('tabBookmarks');
 const tabSettings = document.getElementById('tabSettings');
 
 // Folder Views
@@ -27,9 +34,13 @@ const saveFolderBtn = document.getElementById('saveFolderBtn');
 const newFolderNameInput = document.getElementById('newFolderName');
 const backToFoldersBtn = document.getElementById('backToFoldersBtn');
 const activeFolderName = document.getElementById('activeFolderName');
+const statFolderCount = document.getElementById('statFolderCount');
 
-// Flashcards & Quiz
-const flashcardForm = document.getElementById('flashcardForm');
+// Flashcards & Quiz + Modal Triggers
+const openCardModalBtn = document.getElementById('openCardModalBtn');
+const cardModal = document.getElementById('cardModal');
+const cancelCardBtn = document.getElementById('cancelCardBtn');
+const flashcardModalForm = document.getElementById('flashcardModalForm');
 const cardsGrid = document.getElementById('cardsGrid');
 const startQuizBtn = document.getElementById('startQuizBtn');
 const quizView = document.getElementById('quizView');
@@ -50,7 +61,7 @@ let currentFolderId = null;
 let activeFolderCards = [];
 let currentQuizIndex = 0;
 
-// Check LocalStorage on page load for auto-login persistence
+// Auto-login session persistence check
 window.addEventListener('DOMContentLoaded', () => {
     const savedEmail = localStorage.getItem('studyplax_user');
     if (savedEmail) {
@@ -126,20 +137,27 @@ function showDashboard(email) {
     loadFolders();
 }
 
-// Sidebar Navigation
-navFolders.addEventListener('click', () => {
-    navFolders.classList.add('active-tab');
-    navSettings.classList.remove('active-tab');
-    tabFolders.style.display = 'block';
-    tabSettings.style.display = 'none';
-});
+// Sidebar Navigation Switcher Helper
+const allTabs = [tabDashboard, tabFolders, tabAnalytics, tabBookmarks, tabSettings];
+const allNavs = [navDashboard, navFolders, navAnalytics, navBookmarks, navSettings];
 
-navSettings.addEventListener('click', () => {
-    navSettings.classList.add('active-tab');
-    navFolders.classList.remove('active-tab');
-    tabSettings.style.display = 'block';
-    tabFolders.style.display = 'none';
+function switchTab(activeTabEl, activeNavEl) {
+    allTabs.forEach(tab => tab.style.display = 'none');
+    allNavs.forEach(nav => nav.classList.remove('active-tab'));
+    activeTabEl.style.display = 'block';
+    activeNavEl.classList.add('active-tab');
+}
+
+navDashboard.addEventListener('click', () => switchTab(tabDashboard, navDashboard));
+navFolders.addEventListener('click', () => {
+    switchTab(tabFolders, navFolders);
+    folderDetailView.style.display = 'none';
+    quizView.style.display = 'none';
+    foldersHomeView.style.display = 'block';
 });
+navAnalytics.addEventListener('click', () => switchTab(tabAnalytics, navAnalytics));
+navBookmarks.addEventListener('click', () => switchTab(tabBookmarks, navBookmarks));
+navSettings.addEventListener('click', () => switchTab(tabSettings, navSettings));
 
 // Folder Modals
 openFolderModalBtn.addEventListener('click', () => folderModal.style.display = 'flex');
@@ -165,8 +183,11 @@ async function loadFolders() {
     const res = await fetch(`/api/folders?email=${encodeURIComponent(currentUserEmail)}`);
     const data = await res.json();
     foldersGrid.innerHTML = '';
-    if (data.folders && data.folders.length > 0) {
-        data.folders.forEach(folder => {
+    const folders = data.folders || [];
+    statFolderCount.textContent = folders.length;
+
+    if (folders.length > 0) {
+        folders.forEach(folder => {
             const el = document.createElement('div');
             el.className = 'folder-card';
             el.innerHTML = `<i class="fa-solid fa-folder-closed"></i><h3>${folder.folder_name}</h3>`;
@@ -193,8 +214,11 @@ backToFoldersBtn.addEventListener('click', () => {
     loadFolders();
 });
 
-// Flashcards inside folder
-flashcardForm.addEventListener('submit', async (e) => {
+// Flashcard Modal Triggers inside folder
+openCardModalBtn.addEventListener('click', () => cardModal.style.display = 'flex');
+cancelCardBtn.addEventListener('click', () => cardModal.style.display = 'none');
+
+flashcardModalForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const question = document.getElementById('cardQuestion').value;
     const answer = document.getElementById('cardAnswer').value;
@@ -207,6 +231,7 @@ flashcardForm.addEventListener('submit', async (e) => {
     if (res.ok) {
         document.getElementById('cardQuestion').value = '';
         document.getElementById('cardAnswer').value = '';
+        cardModal.style.display = 'none';
         loadFlashcards();
     }
 });
@@ -215,7 +240,11 @@ async function loadFlashcards() {
     const res = await fetch(`/api/flashcards?folder_id=${currentFolderId}`);
     const data = await res.json();
     activeFolderCards = data.cards || [];
+    
+    // Clear dynamic cards but keep the first "+" add card trigger tile
     cardsGrid.innerHTML = '';
+    cardsGrid.appendChild(openCardModalBtn);
+
     if (activeFolderCards.length > 0) {
         activeFolderCards.forEach(card => {
             const cardEl = document.createElement('div');
@@ -224,8 +253,6 @@ async function loadFlashcards() {
             cardEl.addEventListener('click', () => cardEl.classList.toggle('flipped'));
             cardsGrid.appendChild(cardEl);
         });
-    } else {
-        cardsGrid.innerHTML = '<p>No flashcards in this folder yet.</p>';
     }
 }
 
@@ -270,7 +297,7 @@ prevQuizBtn.addEventListener('click', () => {
     }
 });
 
-// Logout Button clears localStorage and resets session
+// Logout Button
 logoutBtn.addEventListener('click', () => {
     localStorage.removeItem('studyplax_user');
     dashboardScreen.style.display = 'none';
