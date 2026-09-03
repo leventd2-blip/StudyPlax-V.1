@@ -1,12 +1,8 @@
 {
-  "name": "studyplax",
+  "name": "study-plax",
   "version": "1.0.0",
-  "description": "StudyPlax Learning Platform",
-  "main": "api/index.js",
-  "scripts": {
-    "start": "node api/index.js"
-  },
   "dependencies": {
-    "express": "^4.19.2"
+    "@supabase/supabase-js": "^2.0.0",
+    "cors": "^2.8.5"
   }
 }
